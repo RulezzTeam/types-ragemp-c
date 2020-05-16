@@ -42,6 +42,7 @@ interface Mp {
 	players: PlayerMpPool;
 	raycasting: RaycastingMp;
 	storage: StorageMp;
+	event: EventMp;
 	Vector3: Vector3Mp;
 	vehicles: VehicleMpPool;
 	voiceChat: VoiceChatMp;
@@ -3397,6 +3398,13 @@ interface VehicleMpPool extends EntityMpPool<VehicleMp> {
 // -------------------------------------------------------------------------
 // Additional MP types
 // -------------------------------------------------------------------------
+
+//	https://wiki.rage.mp/index.php?title=Events::Event
+interface EventMp {
+	new(eventName: string, callback: (...args: any[]) => void)): EventMp;
+	void destroy();
+
+}
 
 interface Vector3Mp {
 	new(x: number, y: number, z: number): Vector3Mp;
