@@ -42,7 +42,7 @@ interface Mp {
 	players: PlayerMpPool;
 	raycasting: RaycastingMp;
 	storage: StorageMp;
-	event: EventMp;
+	Event: EventMp;
 	Vector3: Vector3Mp;
 	vehicles: VehicleMpPool;
 	voiceChat: VoiceChatMp;
