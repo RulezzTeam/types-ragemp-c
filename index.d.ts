@@ -26,7 +26,9 @@ interface Mp {
 	cameras: CameraMpPool;
 	checkpoints: CheckpointMpPool;
 	colshapes: ColshapeMpPool;
+	console: ConsoleMp;
 	discord: DiscordMp;
+	dummies: DummyEntityMpPool;
 	events: EventMpPool;
 	game: GameMp;
 	gui: GuiMp;
@@ -61,6 +63,7 @@ interface GameMp {
 	fire: GameFireMp;
 	gameplay: GameGameplayMp;
 	graphics: GameGraphicsMp;
+	gxt: GameGxtMp;
 	interior: GameInteriorMp;
 	itemset: GameItemsetMp;
 	mobile: GameMobileMp;
@@ -84,6 +87,9 @@ interface GameMp {
 	zone: GameZoneMp;
 
 	invoke(hash: string, ...args: any[]): any;
+	invokeFloat(hash: string, ...args: any[]): any;
+	invokeString(hash: string, ...args: any[]): any;
+	invokeVector(hash: string, ...args: any[]): any;
 	joaat(text: string): Hash;
 	joaat(textArray: string[]): Hash[];
 	wait(ms: number): void;
@@ -191,6 +197,7 @@ interface EntityMp {
 	doesHaveDrawable(): boolean;
 	doesHavePhysics(): boolean;
 	forceAiAndAnimationUpdate(): void;
+	forceStreamingUpdate(): void;
 	freezePosition(toggle: boolean): void;
 	getAlpha(): number;
 	getAnimCurrentTime(animDict: string, animName: string): number;
@@ -291,7 +298,6 @@ interface EntityMp {
 		p6: number): boolean;
 	processAttachments(): void;
 	resetAlpha(): void;
-	setAlpha(alpha: number) : void;
 	setAlpha(alphaLevel: number, skin: boolean): void;
 	setAlwaysPrerender(toggle: boolean): void;
 	setAnimCurrentTime(animDict: string, animName: string, time: number): void;
@@ -341,11 +347,22 @@ interface ColshapeMp extends EntityMp {
 	triggered: boolean;
 }
 
+interface DummyEntity {
+	readonly dimension: number;
+
+	getVariable(value: string): any;
+}
+
 interface MarkerMp extends EntityMp {
 	// TODO
 }
 
 interface ObjectMp extends EntityMp {
+	hidden: boolean;
+	isWeak: boolean;
+	notifyStreaming: boolean;
+	streamingRange: number;
+
 	hasBeenBroken(): boolean;
 	isVisible(): boolean;
 	markForDeletion(): void;
@@ -384,6 +401,8 @@ interface PlayerMp extends EntityMp {
 	heading: number;
 	health: number;
 	name: string;
+	p2pEnabled: boolean;
+	p2pConnected: boolean;
 	voiceAutoVolume: boolean;
 	voiceVolume: number;
 	voice3d: any; // TODO
@@ -414,6 +433,7 @@ interface PlayerMp extends EntityMp {
 	applyDamageTo(damageAmount: number, p2: boolean): void;
 	canInCombatSeeTarget(target: Handle): boolean;
 	canKnockOffVehicle(): boolean;
+	call(eventName: string, ...args: any[]): void;
 	canPedHear(ped: Handle): boolean;
 	canRagdoll(): boolean;
 	changePed(ped: Handle, b2: boolean, b3: boolean): void;
@@ -1155,8 +1175,8 @@ interface VehicleMp extends EntityMp {
 	getMaxNumberOfPassengers(): number;
 	getMaxTraction(): number;
 	getMod(modType: number): number;
-	getModColor1(paintType: number | number, color: number, p2: number): {
-		paintType: number | number;
+	getModColor1(paintType: number, color: number, p2: number): {
+		paintType: number;
 		color: number;
 		p2: number;
 	};
@@ -1213,7 +1233,7 @@ interface VehicleMp extends EntityMp {
 	isCargobobHookActive(): boolean;
 	isCargobobMagnetActive(): boolean;
 	isDamaged(): boolean;
-	isDoorDamaged(doorId: number | number): boolean;
+	isDoorDamaged(doorId: number): boolean;
 	isDriveable(p0: boolean): boolean;
 	isExtraTurnedOn(extraId: number): boolean;
 	isHeliPartBroken(p0: boolean, p1: boolean, p2: boolean): boolean;
@@ -1387,6 +1407,8 @@ interface BrowserMp {
 	execute(code: string): void;
 	markAsChat(): void;
 	reload(ignoreCache: boolean): void;
+	call(eventName: string, ...args: any[]): void;
+	executeCached(code: string): void;
 }
 
 interface CameraMp {
@@ -1449,6 +1471,16 @@ interface CameraMp {
 	shake(type: string, amplitude: number): void;
 	stopPointing(): void;
 	stopShaking(p0: boolean): void;
+}
+
+interface ConsoleMp {
+	logInfo(message: string, save?: boolean, saveAsync?: boolean): void;
+	logWarning(message: string, save?: boolean, saveAsync?: boolean): void;
+	logError(message: string, save?: boolean, saveAsync?: boolean): void;
+	logFatal(message: string, save?: boolean, saveAsync?: boolean): void;
+	clear(): void;
+	reset(): void;
+	verbosity: RageEnums.ConsoleVerbosity | string;
 }
 
 interface DiscordMp {
@@ -1769,7 +1801,7 @@ interface GameDecisioneventMp {
 	isShockingEventInSphere(type: number, x: number, y: number, z: number, radius: number): boolean;
 	removeAllShockingEvents(p0: boolean): void;
 	removeShockingEvent(event: GameScriptMp): boolean;
-	suppressShockingEvent(type: number | number): void;
+	suppressShockingEvent(type: number): void;
 	unblockDecisionMakerEvent(name: Hash, type: number): void;
 }
 
@@ -1825,7 +1857,7 @@ interface GameDlc1Mp {
 	getForcedComponent(componentHash: Hash, componentId: number, p2: any, p3: any, p4: any): void;
 	getNumDlcWeaponComponents(dlcWeaponIndex: number): number;
 	getNumForcedComponents(componentHash: Hash): number;
-	getNumPropsFromOutfit(p0: number | number, p1: number, p2: number, p3: boolean, p4: number, componentId: number): number;
+	getNumPropsFromOutfit(p0: number, p1: number, p2: number, p3: boolean, p4: number, componentId: number): number;
 	getPropFromOutfit(outfit: any, slot: number, item: any): boolean;
 	getShopPedComponent(p0: any, p1: any): void;
 	getShopPedOutfit(p0: any, p1: any): void;
@@ -2129,6 +2161,7 @@ interface GameGraphicsMp {
 	enableAlienBloodVfx(toggle: boolean): void;
 	enableClownBloodVfx(toggle: boolean): void;
 	enableMovieSubtitles(toggle: boolean): void;
+	enableLights(toggle: boolean): void;
 	fadeDecalsInRange(p0: any, p1: any, p2: any, p3: any, p4: any): void;
 	getDecalWashLevel(decal: number): number;
 	getSafeZoneSize(): number;
@@ -2757,6 +2790,7 @@ interface GameStatsMp {
 
 interface GameStreamingMp {
 	doesAnimDictExist(animDict: string): boolean;
+	forceStreamingUpdate(): boolean;
 	getIdealPlayerSwitchType(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number): number;
 	hasAnimDictLoaded(animDict: string): boolean;
 	hasAnimSetLoaded(animSet: string): boolean;
@@ -3161,6 +3195,7 @@ interface GameWeaponMp {
 	setFlashLightFadeDistance(distance: number): void;
 	setPedAmmoToDrop(p0: any, p1: any): void;
 	setWeaponObjectTintIndex(weapon: EntityMp, tint: number): void;
+	unequipEmptyWeapons: boolean;
 }
 
 interface GameWorldprobeMp {
@@ -3201,6 +3236,13 @@ interface GameZoneMp {
 	overridePopscheduleVehicleModel(scheduleId: number, vehicleHash: number): void;
 	overridePopscheduleVehicleModel(scheduleId: number, vehicleHash: string): void;
 	setZoneEnabled(zoneId: number, toggle: boolean): void;
+}
+
+interface GameGxtMp {
+	set(labelNameOrHash: string, newLabelValue:string): void;
+	get(labelNameOrHash: string): string;
+	getDefault(labelNameOrHash: string): string;
+	reset(): void;
 }
 
 // -------------------------------------------------------------------------
@@ -3258,10 +3300,10 @@ interface CheckpointMpPool extends EntityMpPool<CheckpointMp> {
 }
 
 interface ColshapeMpPool extends EntityMpPool<ColshapeMp> {
-	newCircle(x: number, y: number, range: number): ColshapeMp;
+	newCircle(x: number, y: number, range: number, dimension?: number): ColshapeMp;
 	newCuboid(x: number, y: number, z: number, width: number, depth: number, height: number): ColshapeMp;
 	newRectangle(x: number, y: number, width: number, height: number): ColshapeMp;
-	newSphere(x: number, y: number, z: number, range: number): ColshapeMp;
+	newSphere(x: number, y: number, z: number, range: number, dimension?: number): ColshapeMp;
 	newTube(x: number, y: number, z: number, range: number, height: number): ColshapeMp;
 }
 
@@ -3275,9 +3317,11 @@ interface EntityMpPool<TEntity> {
 	atRemoteId(remoteId: number): TEntity;
 	exists(entity: TEntity | number): boolean;
 	forEach(fn: (entity: TEntity) => void): void;
+	forEachFast(fn: (entity: TEntity) => void): void;
 	forEachInRange(position: Vector3Mp, range: number, fn: (entity: TEntity) => void): void;
 	forEachInDimension(position: Vector3Mp, range: number, dimension: number, fn: (entity: TEntity) => void): void;
 	forEachInStreamRange(fn: (entity: TEntity) => void): void;
+	getClosest(position: Vector3Mp, amount?:number): TEntity[];
 	toArray(): TEntity[];
 }
 
@@ -3286,9 +3330,14 @@ interface EventMpPool {
 	add(eventName: RageEnums.EventKey | string, callback: (...args: any[]) => void): void;
 	add(events: ({ [name: string]: (...args: any[]) => void; })): void;
 	call(eventName: string, ...args: any[]): void;
+	callRemoteUnreliable(eventName: string, ...args: any[]): void;
 	callRemote(eventName: string, ...args: any[]): void;
 	remove(eventName: string, handler?: (...args: any[]) => void): void;
 	remove(eventNames: string[]): void;
+}
+
+interface DummyEntityMpPool extends EntityMpPool<DummyEntity> {
+	forEachByType(fn: (dummyEntity: DummyEntity) => void): void;
 }
 
 interface MarkerMpPool extends EntityMpPool<MarkerMp> {
@@ -3308,6 +3357,7 @@ interface ObjectMpPool extends EntityMpPool<ObjectMp> {
 		dimension?: number,
 		rotation?: Vector3Mp
 	}): ObjectMp;
+	newWeak(...args: any): ObjectMp; // TODO
 }
 
 interface PedMpPool extends EntityMpPool<PedMp> {
