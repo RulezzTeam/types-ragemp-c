@@ -3402,7 +3402,7 @@ interface VehicleMpPool extends EntityMpPool<VehicleMp> {
 //	https://wiki.rage.mp/index.php?title=Events::Event
 interface EventMp {
 	new(eventName: string, callback: (...args: any[]) => void)): EventMp;
-	void destroy();
+	destroy(): void;
 
 }
 
